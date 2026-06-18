@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     cancel_url: `${base}/?cancelled=1`,
   });
 
-  save(session.id, resume, jd);
+  await save(session.id, resume, jd);
 
   return NextResponse.json({ url: session.url });
 }

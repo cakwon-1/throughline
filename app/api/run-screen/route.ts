@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Payment not confirmed." }, { status: 402 });
   }
 
-  const payload = get(sessionId);
+  const payload = await get(sessionId);
   if (!payload) {
     return NextResponse.json({ error: "Session expired or not found." }, { status: 404 });
   }
@@ -67,7 +67,7 @@ ${jd}`;
   const result = JSON.parse(text);
 
   // Consume the session so it can't be replayed
-  del(sessionId);
+  await del(sessionId);
 
   return NextResponse.json(result);
 }

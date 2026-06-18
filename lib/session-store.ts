@@ -1,30 +1,19 @@
-// In-memory store mapping Stripe checkout session IDs to resume+JD payloads.
-// Fine for a single-instance deploy; swap for Redis/KV for multi-instance.
+import Redis from "ioredis";
 
-interface Payload {
-  resume: string;
-  jd: string;
-  createdAt: number;
+const redis = new Redis(process.env.REDIS_URL!, { lazyConnect: true });
+
+const TTL_SECS = 60 * 60; // 1 hour
+
+export async function save(sessionId: string, resume: string, jd: string) {
+  await redis.set(sessionId, JSON.stringify({ resume, jd }), "EX", TTL_SECS);
 }
 
-const store = new Map<string, Payload>();
-
-const TTL_MS = 60 * 60 * 1000; // 1 hour
-
-export function save(sessionId: string, resume: string, jd: string) {
-  store.set(sessionId, { resume, jd, createdAt: Date.now() });
+export async function get(sessionId: string): Promise<{ resume: string; jd: string } | undefined> {
+  const val = await redis.get(sessionId);
+  if (!val) return undefined;
+  return JSON.parse(val);
 }
 
-export function get(sessionId: string): Payload | undefined {
-  const entry = store.get(sessionId);
-  if (!entry) return undefined;
-  if (Date.now() - entry.createdAt > TTL_MS) {
-    store.delete(sessionId);
-    return undefined;
-  }
-  return entry;
-}
-
-export function del(sessionId: string) {
-  store.delete(sessionId);
+export async function del(sessionId: string) {
+  await redis.del(sessionId);
 }
