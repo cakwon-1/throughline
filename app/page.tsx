@@ -9,9 +9,9 @@ const PALETTE = {
   inkSoft: "#5C6478",
   line: "#DDE2ED",
   system: "#0A0F1E",
-  reject: "#C0392B",
-  review: "#D97706",
-  advance: "#0F7A4B",
+  reject: "#E8000D",
+  review: "#F5A500",
+  advance: "#00A550",
 };
 
 const SAMPLE_RESUME = `JORDAN PARK
