@@ -137,6 +137,51 @@ const EXAMPLE_RESULT: ScreenResult = {
   ],
 };
 
+const DIY_PROMPT = `You are a semantic resume screener. I need you to analyze how well my resume aligns with a job description — not by keyword matching, but by semantic meaning, the way an LLM-based HR screener would.
+
+Please do the following:
+
+1. Extract the 8 most semantically important concepts from the job description — specific outcomes, competencies, scope signals, and methodologies (not generic words like "collaborate").
+
+2. For each concept, tell me whether my resume covers it semantically (strong / partial / missing), and in one sentence explain what the resume does or doesn't say about it.
+
+3. For the 3 lowest-coverage gaps, rewrite a specific bullet from my resume to close the gap. Each rewrite must:
+   — Mirror the semantic field of the JD concept
+   — Include at least one quantified outcome (use ~ if estimated)
+   — Sound like a real human wrote it — no "spearheaded", "leveraged", "utilized", or "results-driven"
+
+4. Give me an overall semantic alignment score from 0–100, and tell me whether this resume would likely auto-advance (80+), go to human review (60–79), or auto-reject (<60).
+
+Be honest and specific. Do not flatter.
+
+---
+JOB DESCRIPTION:
+[paste job description here]
+
+---
+RESUME:
+[paste resume here]`;
+
+function CopyPrompt() {
+  const [copied, setCopied] = useState(false);
+
+  function handleCopy() {
+    navigator.clipboard.writeText(DIY_PROMPT).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  return (
+    <div className="tl-diy-prompt">
+      <pre className="tl-diy-pre">{DIY_PROMPT}</pre>
+      <button className="tl-diy-copy" onClick={handleCopy} type="button">
+        {copied ? "Copied!" : "Copy prompt"}
+      </button>
+    </div>
+  );
+}
+
 function ResultPanel({ result, onReset }: { result: ScreenResult; onReset: () => void }) {
   const vm = verdictMeta(result.verdict);
   return (
@@ -387,6 +432,18 @@ function App() {
             <ResultPanel result={EXAMPLE_RESULT} onReset={() => {}} />
           </div>
 
+          <div className="tl-panel tl-diy-panel">
+            <div className="tl-panel-head" style={{ marginBottom: 12 }}>
+              <span className="tl-eyebrow">If you don&apos;t want to pay</span>
+            </div>
+            <p className="tl-diy-intro">
+              Copy this prompt into Claude, ChatGPT, or any LLM. Paste your resume and job description where indicated. It won&apos;t be as structured as our output, but it will surface the same gaps.
+            </p>
+            <div className="tl-diy-prompt-wrap">
+              <CopyPrompt />
+            </div>
+          </div>
+
         </aside>
 
       </main>
@@ -539,6 +596,24 @@ const css = `
   margin:0 0 8px;line-height:1.6;}
 .tl-rw-why{font-size:11.5px;color:var(--inkSoft);margin:0;line-height:1.5;font-style:italic;}
 .tl-another{margin-top:20px;padding-top:16px;border-top:1px solid var(--line);}
+
+/* DIY PANEL */
+.tl-diy-intro{font-size:13px;color:var(--inkSoft);line-height:1.65;margin:0 0 14px;}
+.tl-diy-prompt{position:relative;}
+.tl-diy-pre{
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:11.5px;line-height:1.7;color:var(--ink);
+  background:var(--paper);border:1px solid var(--line);
+  border-radius:12px;padding:14px;white-space:pre-wrap;word-break:break-word;
+  margin:0 0 10px;max-height:260px;overflow-y:auto;
+}
+.tl-diy-copy{
+  width:100%;background:transparent;border:1.5px solid var(--ink);
+  border-radius:10px;padding:10px;font-size:13px;font-weight:700;
+  color:var(--ink);cursor:pointer;letter-spacing:-0.01em;
+  transition:background .15s,color .15s;
+}
+.tl-diy-copy:hover{background:var(--ink);color:#fff;}
 
 @media(prefers-reduced-motion:reduce){
   .tl-pulse{animation:none;}
