@@ -64,6 +64,36 @@ function scoreColor(s: number) {
   return PALETTE.reject;
 }
 
+const EXAMPLE_RESULT: ScreenResult = {
+  overall: 54,
+  verdict: "reject",
+  summary: "Jordan's resume reads as a generic PM profile that fails to demonstrate the growth-specific expertise this role demands. Bullet language is vague and passive, with no quantified outcomes and no evidence of end-to-end experiment ownership. The screener would auto-reject before a human ever sees this.",
+  dimensions: [
+    { name: "Requirements match", score: 48, note: "No growth experimentation or retention work cited" },
+    { name: "Seniority signal", score: 55, note: "Language reads associate-level despite PM title" },
+    { name: "Quantified impact", score: 20, note: "Zero metrics across all bullets" },
+    { name: "Narrative fit", score: 60, note: "PM background fits broadly, not for growth specifically" },
+    { name: "Authenticity", score: 38, note: "Heavy boilerplate — 'leveraged', 'spearheaded', 'various initiatives'" },
+  ],
+  flags: [
+    { severity: "high", issue: "No quantified outcomes anywhere on the resume", evidence: "improved the customer experience and aligned with strategic goals" },
+    { severity: "high", issue: "Boilerplate language signals AI-generated or template copy", evidence: "Leveraged data-driven insights to optimize user engagement" },
+    { severity: "med", issue: "Missing required skills: experimentation fluency, retention metrics", evidence: "SKILLS: Roadmapping, Agile, Stakeholder management…" },
+  ],
+  rewrites: [
+    {
+      before: "Leveraged data-driven insights to optimize user engagement and drive growth across the platform.",
+      after: "Ran 12 A/B experiments on the onboarding funnel, lifting 7-day activation by 18% and contributing $1.2M ARR.",
+      why: "Specific experiment count + metric + revenue makes it scannable and credible",
+    },
+    {
+      before: "Spearheaded various initiatives that improved the customer experience and aligned with strategic goals.",
+      after: "Owned the retention roadmap for SMB segment; reduced 90-day churn from 14% to 9% over two quarters.",
+      why: "Segment + before/after metric replaces vague ownership claim",
+    },
+  ],
+};
+
 function App() {
   const params = useSearchParams();
   const router = useRouter();
@@ -73,7 +103,8 @@ function App() {
   const [jd, setJd] = useState("");
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
-  const [result, setResult] = useState<ScreenResult | null>(null);
+  const [result, setResult] = useState<ScreenResult | null>(EXAMPLE_RESULT);
+  const [isExample, setIsExample] = useState(true);
   const [screenLoading, setScreenLoading] = useState(false);
   const [screenError, setScreenError] = useState("");
 
@@ -86,12 +117,12 @@ function App() {
       .then((r) => r.json())
       .then((data) => {
         if (data.error) setScreenError(data.error);
-        else setResult(data);
+        else { setResult(data); setIsExample(false); }
       })
       .catch(() => setScreenError("Failed to load results. Try again."))
       .finally(() => {
         setScreenLoading(false);
-        // Clean session_id from URL without a page reload
+        setIsExample(false);
         router.replace("/", { scroll: false });
       });
   }, [sessionId]);
@@ -129,7 +160,8 @@ function App() {
   }
 
   function runAnother() {
-    setResult(null);
+    setResult(EXAMPLE_RESULT);
+    setIsExample(true);
     setScreenError("");
     setResume("");
     setJd("");
@@ -224,6 +256,11 @@ function App() {
 
           {result && vm && (
             <div className="tl-readout">
+              {isExample && (
+                <div className="tl-example-banner">
+                  <span>Example output — run your own screen to replace this</span>
+                </div>
+              )}
               {/* VERDICT METER */}
               <div className="tl-verdict">
                 <div className="tl-verdict-top">
@@ -373,6 +410,9 @@ const css = `
 .tl-error{color:${PALETTE.reject};font-size:12.5px;margin:0 0 8px;}
 
 .tl-right{min-height:480px;}
+.tl-example-banner{background:rgba(58,61,224,0.07);border:1px solid rgba(58,61,224,0.18);
+  border-radius:8px;padding:8px 12px;margin-bottom:18px;font-size:12px;
+  color:var(--system);font-weight:500;text-align:center;}
 .tl-empty{height:100%;min-height:400px;display:flex;flex-direction:column;
   align-items:center;justify-content:center;text-align:center;padding:30px;}
 .tl-empty-mark{font-size:30px;color:var(--system);opacity:0.55;}
