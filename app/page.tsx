@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
 const PALETTE = {
@@ -223,6 +223,7 @@ function App() {
   const [screenLoading, setScreenLoading] = useState(false);
   const [screenError, setScreenError] = useState("");
   const [openBrief, setOpenBrief] = useState<number | null>(0);
+  const topRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -278,14 +279,14 @@ function App() {
     setScreenError("");
     setResume("");
     setJd("");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    topRef.current?.scrollIntoView({ behavior: "smooth" });
   }
 
   return (
     <div className="tl-root">
       <style>{css}</style>
 
-      <header className="tl-header">
+      <header className="tl-header" ref={topRef}>
         <div className="tl-brand">
           <span className="tl-dot" />
           <span className="tl-wordmark">passtheaiscreener</span>
