@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
         quantity: 1,
       },
     ],
-    success_url: `${base}/result?session_id={CHECKOUT_SESSION_ID}`,
+    success_url: `${base}/?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${base}/?cancelled=1`,
   });
 
