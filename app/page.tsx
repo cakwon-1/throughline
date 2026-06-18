@@ -81,23 +81,23 @@ function statusLabel(s: string) {
 const BRIEF_SECTIONS = [
   {
     heading: "What's actually happening when you apply",
-    body: "Large companies — think Fortune 500, consulting firms, tech companies with thousands of applicants — have added an AI layer on top of traditional ATS systems like Workday and Greenhouse. Before a human recruiter sees your resume, an LLM reads both your resume and the job description and produces a ranked score. You're competing against that score, not a person.",
+    body: "Large companies (Fortune 500, consulting firms, tech companies with thousands of applicants) have added an AI layer on top of traditional ATS systems like Workday and Greenhouse. Before a human recruiter sees your resume, an LLM reads both your resume and the job description and produces a ranked score. You're competing against that score, not a person.",
   },
   {
     heading: "It's semantic, not keyword-based",
-    body: "The old advice was to mirror the job description word-for-word. That worked for keyword-scanning ATS. LLM screeners work differently: they embed both documents into vector space and measure conceptual distance. Your resume can use completely different words and still score well — if the underlying meaning aligns. The flip side: stuffing in keywords from the JD without substantive backing actually hurts you, because the model detects the mismatch between the words and the evidence.",
+    body: "The old advice was to mirror the job description word-for-word. That worked for keyword-scanning ATS. LLM screeners work differently: they embed both documents into vector space and measure conceptual distance. Your resume can use completely different words and still score well, as long as the underlying meaning aligns. Stuffing in keywords from the JD without substantive backing actually hurts you, because the model detects the mismatch between the words and the evidence.",
   },
   {
     heading: "What moves the score most",
-    body: "Three things drive semantic alignment scores: (1) Scope language — does your resume demonstrate ownership at the right level for this role? Words like 'assisted' and 'supported' signal junior; 'owned', 'defined', and 'accountable for' signal senior. (2) Specificity — vague bullets like 'improved performance' have low information density. Screeners weight specific, quantified outcomes heavily. (3) Domain coverage — each JD has 6-10 conceptual pillars. If your resume doesn't address even one of them, the overall score drops sharply regardless of everything else.",
+    body: "Three things drive semantic alignment scores: (1) Scope language. Does your resume show ownership at the right level? Words like 'assisted' and 'supported' read junior. 'Owned', 'defined', and 'accountable for' read senior. (2) Specificity. Vague bullets like 'improved performance' have low information density. Screeners weight quantified outcomes heavily. (3) Domain coverage. Each JD has 6-10 conceptual pillars. Miss even one of them and the overall score drops sharply.",
   },
   {
     heading: "Why AI-written bullets backfire",
-    body: "Screeners in 2025-26 are trained to detect and down-rank AI-generated boilerplate. Phrases like 'leveraged data-driven insights', 'spearheaded cross-functional initiatives', and 'results-driven professional' are statistically associated with low-quality, unsubstantiated resumes. They cluster together in embedding space in ways the model has learned to penalize. Ironically, a plainly-written specific bullet — 'cut support ticket volume 40% by rewriting onboarding flow' — scores higher than any AI-polished version of the same claim.",
+    body: "Screeners in 2025-26 are trained to detect and down-rank AI-generated boilerplate. Phrases like 'leveraged data-driven insights', 'spearheaded cross-functional initiatives', and 'results-driven professional' are statistically associated with low-quality, unsubstantiated resumes. They cluster in embedding space in ways the model has learned to penalize. A plainly-written specific bullet like 'cut support ticket volume 40% by rewriting onboarding flow' scores higher than any AI-polished version of the same claim.",
   },
   {
     heading: "What to do when you're applying to many jobs",
-    body: "Tailoring every resume from scratch isn't realistic at volume. The smarter approach: maintain a master resume with every substantive bullet you've ever written, then run each JD through a tool like this to identify the 2-3 highest-impact swaps. You don't need to rewrite the whole document — you need to close the specific semantic gaps the screener will penalize. Each targeted swap takes 10 minutes and can move a reject to a review.",
+    body: "Tailoring every resume from scratch isn't realistic at volume. A better approach: keep a master resume with every substantive bullet you've ever written, then run each JD through a tool like this to find the 2-3 highest-impact swaps. You don't need to rewrite the whole document. You need to close the specific semantic gaps the screener will penalize. Each targeted swap takes 10 minutes and can move a reject to a review.",
   },
 ];
 
@@ -107,19 +107,19 @@ const EXAMPLE_RESULT: ScreenResult = {
   summary: "Jordan's resume reads as a generic PM profile that fails to demonstrate the growth-specific expertise this role demands. Bullet language is vague and passive, with no quantified outcomes and no evidence of end-to-end experiment ownership. The screener would auto-reject before a human ever sees this.",
   gaps: [
     { phrase: "activation and retention funnel", coverage: 15, status: "missing", explanation: "Resume never mentions activation, retention, or funnel ownership in any form." },
-    { phrase: "end-to-end experiment ownership", coverage: 10, status: "missing", explanation: "No experiments mentioned — A/B testing listed in skills but never demonstrated in context." },
+    { phrase: "end-to-end experiment ownership", coverage: 10, status: "missing", explanation: "No experiments mentioned. A/B testing is listed in skills but never demonstrated in context." },
     { phrase: "measurable revenue or retention impact", coverage: 8, status: "missing", explanation: "Zero metrics across all bullets. No revenue, retention, or any quantified outcome." },
     { phrase: "growth roadmap definition", coverage: 40, status: "partial", explanation: "'Responsible for the product roadmap' is close but doesn't specify growth context or scope." },
     { phrase: "data science partnership", coverage: 20, status: "missing", explanation: "No mention of data science collaboration or analytics partnerships anywhere." },
     { phrase: "SQL and experimentation fluency", coverage: 35, status: "partial", explanation: "SQL listed in skills but no evidence of use; experimentation absent from experience bullets." },
     { phrase: "leading without authority", coverage: 25, status: "missing", explanation: "'Cross-functionally' appears once but no evidence of influence-based leadership." },
-    { phrase: "core metric ownership", coverage: 20, status: "missing", explanation: "No metrics mentioned as owned, tracked, or moved — screener has nothing to anchor seniority to." },
+    { phrase: "core metric ownership", coverage: 20, status: "missing", explanation: "No metrics mentioned as owned, tracked, or moved. The screener has nothing to anchor seniority to." },
   ],
   rewrites: [
     {
       gap: "end-to-end experiment ownership",
       before: "Leveraged data-driven insights to optimize user engagement and drive growth across the platform.",
-      after: "Ran 14 A/B experiments on the onboarding funnel end-to-end — from hypothesis through analysis — lifting 7-day activation by 18% and contributing ~$1.1M ARR.",
+      after: "Ran 14 A/B experiments on the onboarding funnel end-to-end (from hypothesis through analysis), lifting 7-day activation by 18% and contributing ~$1.1M ARR.",
       why: "Adds experiment count, end-to-end ownership signal, and a quantified outcome the screener can anchor to.",
     },
     {
@@ -131,28 +131,28 @@ const EXAMPLE_RESULT: ScreenResult = {
     {
       gap: "leading without authority",
       before: "Assisted with backlog grooming and supported senior PMs on feature launches.",
-      after: "Coordinated release timelines across engineering, design, and marketing for 6 launches without direct authority — all shipped on schedule.",
+      after: "Coordinated release timelines across engineering, design, and marketing for 6 launches without direct authority. All shipped on schedule.",
       why: "Turns a passive support role into a cross-functional influence signal with a concrete delivery count.",
     },
   ],
 };
 
-const DIY_PROMPT = `You are a semantic resume screener. I need you to analyze how well my resume aligns with a job description — not by keyword matching, but by semantic meaning, the way an LLM-based HR screener would.
+const DIY_PROMPT = `You are a semantic resume screener. Analyze how well my resume aligns with this job description. Not by keyword matching, but by semantic meaning, the way an LLM-based HR screener would.
 
-Please do the following:
+Do the following:
 
-1. Extract the 8 most semantically important concepts from the job description — specific outcomes, competencies, scope signals, and methodologies (not generic words like "collaborate").
+1. Extract the 8 most semantically important concepts from the job description. Specific outcomes, competencies, scope signals, methodologies. Not generic words like "collaborate."
 
-2. For each concept, tell me whether my resume covers it semantically (strong / partial / missing), and in one sentence explain what the resume does or doesn't say about it.
+2. For each concept, tell me whether my resume covers it (strong / partial / missing) and in one sentence explain what the resume does or doesn't say about it.
 
 3. For the 3 lowest-coverage gaps, rewrite a specific bullet from my resume to close the gap. Each rewrite must:
-   — Mirror the semantic field of the JD concept
-   — Include at least one quantified outcome (use ~ if estimated)
-   — Sound like a real human wrote it — no "spearheaded", "leveraged", "utilized", or "results-driven"
+   - Mirror the semantic field of the JD concept
+   - Include at least one quantified outcome (use ~ if estimated)
+   - Sound like a real human wrote it. No "spearheaded", "leveraged", "utilized", or "results-driven."
 
-4. Give me an overall semantic alignment score from 0–100, and tell me whether this resume would likely auto-advance (80+), go to human review (60–79), or auto-reject (<60).
+4. Give me an overall semantic alignment score from 0-100 and tell me whether this resume would likely auto-advance (80+), go to human review (60-79), or auto-reject (below 60).
 
-Be honest and specific. Do not flatter.
+Be honest. Do not flatter.
 
 ---
 JOB DESCRIPTION:
@@ -215,7 +215,7 @@ function ResultPanel({ result, onReset }: { result: ScreenResult; onReset: () =>
       {result.gaps?.length > 0 && (
         <div className="tl-block">
           <span className="tl-eyebrow">JD concept coverage</span>
-          <p className="tl-block-sub">The 8 concepts the screener weights most — and how well your resume addresses each.</p>
+          <p className="tl-block-sub">The 8 concepts the screener weights most, and how well your resume addresses each.</p>
           {result.gaps.map((g, i) => (
             <div className="tl-gap" key={i}>
               <div className="tl-gap-row">
@@ -368,12 +368,12 @@ function App() {
               <div className="tl-checkout-area">
                 {checkoutError && <p className="tl-error">{checkoutError}</p>}
                 <button className="tl-run" onClick={handleCheckout} disabled={checkoutLoading} type="button">
-                  {checkoutLoading ? "Redirecting to checkout…" : "Run the screen — $0.99"}
+                  {checkoutLoading ? "Redirecting to checkout..." : "Run the screen - $0.99"}
                 </button>
                 <p className="tl-fineprint">One-time payment · Semantic gap analysis + targeted rewrites</p>
               </div>
               <div className="tl-diy-inline">
-                <p className="tl-diy-inline-label">If you don&apos;t want to pay — copy this prompt into any LLM:</p>
+                <p className="tl-diy-inline-label">If you don&apos;t want to pay, copy this prompt into any LLM:</p>
                 <CopyPrompt />
               </div>
             </>
@@ -431,7 +431,7 @@ function App() {
           <div className="tl-panel tl-example-panel">
             <div className="tl-panel-head" style={{ marginBottom: 16 }}>
               <span className="tl-eyebrow">Example output</span>
-              <span className="tl-brief-subtitle">Jordan Park vs. Senior PM — Growth</span>
+              <span className="tl-brief-subtitle">Jordan Park vs. Senior PM, Growth</span>
             </div>
             <ResultPanel result={EXAMPLE_RESULT} onReset={() => {}} />
           </div>
