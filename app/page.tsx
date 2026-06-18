@@ -101,6 +101,115 @@ const BRIEF_SECTIONS = [
   },
 ];
 
+const EXAMPLE_RESULT: ScreenResult = {
+  overall: 54,
+  verdict: "reject",
+  summary: "Jordan's resume reads as a generic PM profile that fails to demonstrate the growth-specific expertise this role demands. Bullet language is vague and passive, with no quantified outcomes and no evidence of end-to-end experiment ownership. The screener would auto-reject before a human ever sees this.",
+  gaps: [
+    { phrase: "activation and retention funnel", coverage: 15, status: "missing", explanation: "Resume never mentions activation, retention, or funnel ownership in any form." },
+    { phrase: "end-to-end experiment ownership", coverage: 10, status: "missing", explanation: "No experiments mentioned — A/B testing listed in skills but never demonstrated in context." },
+    { phrase: "measurable revenue or retention impact", coverage: 8, status: "missing", explanation: "Zero metrics across all bullets. No revenue, retention, or any quantified outcome." },
+    { phrase: "growth roadmap definition", coverage: 40, status: "partial", explanation: "'Responsible for the product roadmap' is close but doesn't specify growth context or scope." },
+    { phrase: "data science partnership", coverage: 20, status: "missing", explanation: "No mention of data science collaboration or analytics partnerships anywhere." },
+    { phrase: "SQL and experimentation fluency", coverage: 35, status: "partial", explanation: "SQL listed in skills but no evidence of use; experimentation absent from experience bullets." },
+    { phrase: "leading without authority", coverage: 25, status: "missing", explanation: "'Cross-functionally' appears once but no evidence of influence-based leadership." },
+    { phrase: "core metric ownership", coverage: 20, status: "missing", explanation: "No metrics mentioned as owned, tracked, or moved — screener has nothing to anchor seniority to." },
+  ],
+  rewrites: [
+    {
+      gap: "end-to-end experiment ownership",
+      before: "Leveraged data-driven insights to optimize user engagement and drive growth across the platform.",
+      after: "Ran 14 A/B experiments on the onboarding funnel end-to-end — from hypothesis through analysis — lifting 7-day activation by 18% and contributing ~$1.1M ARR.",
+      why: "Adds experiment count, end-to-end ownership signal, and a quantified outcome the screener can anchor to.",
+    },
+    {
+      gap: "measurable revenue or retention impact",
+      before: "Spearheaded various initiatives that improved the customer experience and aligned with strategic goals.",
+      after: "Owned the SMB retention roadmap; reduced 90-day churn from 14% to 9% over two quarters by shipping 3 targeted re-engagement flows.",
+      why: "Replaces vague ownership with a before/after retention metric and specific delivery evidence.",
+    },
+    {
+      gap: "leading without authority",
+      before: "Assisted with backlog grooming and supported senior PMs on feature launches.",
+      after: "Coordinated release timelines across engineering, design, and marketing for 6 launches without direct authority — all shipped on schedule.",
+      why: "Turns a passive support role into a cross-functional influence signal with a concrete delivery count.",
+    },
+  ],
+};
+
+function ResultPanel({ result, onReset }: { result: ScreenResult; onReset: () => void }) {
+  const vm = verdictMeta(result.verdict);
+  return (
+    <div className="tl-readout">
+      <div className="tl-verdict">
+        <div className="tl-verdict-top">
+          <span className="tl-eyebrow">Semantic alignment</span>
+          <span className="tl-verdict-tag" style={{ color: vm.color }}>{vm.label}</span>
+        </div>
+        <div className="tl-score" style={{ color: vm.color }}>
+          {result.overall}<span className="tl-score-max">/100</span>
+        </div>
+        <div className="tl-meter">
+          <div className="tl-meter-zone" style={{ width: "60%", background: PALETTE.reject }} />
+          <div className="tl-meter-zone" style={{ width: "20%", background: PALETTE.review }} />
+          <div className="tl-meter-zone" style={{ width: "20%", background: PALETTE.advance }} />
+          <div className="tl-meter-tick" style={{ left: "60%" }} />
+          <div className="tl-meter-tick" style={{ left: "80%" }} />
+          <div className="tl-meter-marker" style={{ left: `${Math.min(100, Math.max(0, result.overall))}%` }} />
+        </div>
+        <div className="tl-meter-labels">
+          <span>0</span>
+          <span style={{ left: "60%" }}>60</span>
+          <span style={{ left: "80%" }}>80</span>
+          <span style={{ right: 0 }}>100</span>
+        </div>
+      </div>
+
+      <p className="tl-summary">{result.summary}</p>
+
+      {result.gaps?.length > 0 && (
+        <div className="tl-block">
+          <span className="tl-eyebrow">JD concept coverage</span>
+          <p className="tl-block-sub">The 8 concepts the screener weights most — and how well your resume addresses each.</p>
+          {result.gaps.map((g, i) => (
+            <div className="tl-gap" key={i}>
+              <div className="tl-gap-row">
+                <span className="tl-gap-phrase">"{g.phrase}"</span>
+                <span className="tl-gap-status" style={{ color: statusColor(g.status) }}>{statusLabel(g.status)}</span>
+              </div>
+              <div className="tl-dim-track">
+                <div className="tl-dim-fill" style={{ width: `${g.coverage}%`, background: statusColor(g.status) }} />
+              </div>
+              <p className="tl-gap-explanation">{g.explanation}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {result.rewrites?.length > 0 && (
+        <div className="tl-block">
+          <span className="tl-eyebrow">Targeted rewrites</span>
+          <p className="tl-block-sub">3 bullets rewritten to close your lowest-coverage gaps.</p>
+          {result.rewrites.map((r, i) => (
+            <div className="tl-rw" key={i}>
+              <p className="tl-rw-gap">closes gap: {r.gap}</p>
+              <p className="tl-rw-before">{r.before}</p>
+              <p className="tl-rw-after">{r.after}</p>
+              <p className="tl-rw-why">{r.why}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {onReset && (
+        <div className="tl-another">
+          <button className="tl-link" onClick={onReset} type="button">← Screen another resume</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function App() {
   const params = useSearchParams();
   const router = useRouter();
@@ -113,6 +222,7 @@ function App() {
   const [result, setResult] = useState<ScreenResult | null>(null);
   const [screenLoading, setScreenLoading] = useState(false);
   const [screenError, setScreenError] = useState("");
+  const [openBrief, setOpenBrief] = useState<number | null>(0);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -170,8 +280,6 @@ function App() {
     setJd("");
   }
 
-  const vm = result ? verdictMeta(result.verdict) : null;
-
   return (
     <div className="tl-root">
       <style>{css}</style>
@@ -194,7 +302,6 @@ function App() {
                 <span className="tl-eyebrow">Your resume + role</span>
                 <button className="tl-link" onClick={loadExample} type="button">Load example</button>
               </div>
-
               <label className="tl-label" htmlFor="resume">Resume</label>
               <textarea
                 id="resume"
@@ -203,7 +310,6 @@ function App() {
                 value={resume}
                 onChange={(e) => setResume(e.target.value)}
               />
-
               <label className="tl-label" htmlFor="jd">Job description</label>
               <textarea
                 id="jd"
@@ -212,7 +318,6 @@ function App() {
                 value={jd}
                 onChange={(e) => setJd(e.target.value)}
               />
-
               <div className="tl-checkout-area">
                 {checkoutError && <p className="tl-error">{checkoutError}</p>}
                 <button className="tl-run" onClick={handleCheckout} disabled={checkoutLoading} type="button">
@@ -239,93 +344,47 @@ function App() {
             </div>
           )}
 
-          {result && vm && (
-            <div className="tl-readout">
-              {/* VERDICT */}
-              <div className="tl-verdict">
-                <div className="tl-verdict-top">
-                  <span className="tl-eyebrow">Semantic alignment</span>
-                  <span className="tl-verdict-tag" style={{ color: vm.color }}>{vm.label}</span>
-                </div>
-                <div className="tl-score" style={{ color: vm.color }}>
-                  {result.overall}
-                  <span className="tl-score-max">/100</span>
-                </div>
-                <div className="tl-meter">
-                  <div className="tl-meter-zone" style={{ width: "60%", background: PALETTE.reject }} />
-                  <div className="tl-meter-zone" style={{ width: "20%", background: PALETTE.review }} />
-                  <div className="tl-meter-zone" style={{ width: "20%", background: PALETTE.advance }} />
-                  <div className="tl-meter-tick" style={{ left: "60%" }} />
-                  <div className="tl-meter-tick" style={{ left: "80%" }} />
-                  <div className="tl-meter-marker" style={{ left: `${Math.min(100, Math.max(0, result.overall))}%` }} />
-                </div>
-                <div className="tl-meter-labels">
-                  <span>0</span>
-                  <span style={{ left: "60%" }}>60</span>
-                  <span style={{ left: "80%" }}>80</span>
-                  <span style={{ right: 0 }}>100</span>
-                </div>
-              </div>
-
-              <p className="tl-summary">{result.summary}</p>
-
-              {/* GAP MAP */}
-              {result.gaps?.length > 0 && (
-                <div className="tl-block">
-                  <span className="tl-eyebrow">JD concept coverage</span>
-                  <p className="tl-block-sub">The 8 concepts the screener weights most — and how well your resume addresses each.</p>
-                  {result.gaps.map((g, i) => (
-                    <div className="tl-gap" key={i}>
-                      <div className="tl-gap-row">
-                        <span className="tl-gap-phrase">"{g.phrase}"</span>
-                        <span className="tl-gap-status" style={{ color: statusColor(g.status) }}>
-                          {statusLabel(g.status)}
-                        </span>
-                      </div>
-                      <div className="tl-dim-track">
-                        <div className="tl-dim-fill" style={{ width: `${g.coverage}%`, background: statusColor(g.status) }} />
-                      </div>
-                      <p className="tl-gap-explanation">{g.explanation}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* REWRITES */}
-              {result.rewrites?.length > 0 && (
-                <div className="tl-block">
-                  <span className="tl-eyebrow">Targeted rewrites</span>
-                  <p className="tl-block-sub">3 bullets rewritten to close your lowest-coverage gaps.</p>
-                  {result.rewrites.map((r, i) => (
-                    <div className="tl-rw" key={i}>
-                      <p className="tl-rw-gap">closes gap: {r.gap}</p>
-                      <p className="tl-rw-before">{r.before}</p>
-                      <p className="tl-rw-after">{r.after}</p>
-                      <p className="tl-rw-why">{r.why}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div className="tl-another">
-                <button className="tl-link" onClick={runAnother} type="button">← Screen another resume</button>
-              </div>
-            </div>
-          )}
+          {result && <ResultPanel result={result} onReset={runAnother} />}
         </section>
 
-        {/* RIGHT — The Brief, always visible */}
-        <aside className="tl-panel tl-brief">
-          <div className="tl-panel-head" style={{ marginBottom: 18 }}>
-            <span className="tl-eyebrow">The brief</span>
-            <span className="tl-brief-sub">How AI screening works in 2026</span>
-          </div>
-          {BRIEF_SECTIONS.map((s, i) => (
-            <div className="tl-brief-section" key={i}>
-              <p className="tl-brief-heading">{s.heading}</p>
-              <p className="tl-brief-body">{s.body}</p>
+        {/* RIGHT — The Brief (accordion) + example output */}
+        <aside className="tl-right-col">
+
+          <div className="tl-panel tl-brief-panel">
+            <div className="tl-panel-head" style={{ marginBottom: 4 }}>
+              <span className="tl-eyebrow">The brief</span>
+              <span className="tl-brief-subtitle">How AI screening works in 2026</span>
             </div>
-          ))}
+            <div className="tl-accordion">
+              {BRIEF_SECTIONS.map((s, i) => (
+                <div className="tl-acc-item" key={i}>
+                  <button
+                    className="tl-acc-trigger"
+                    onClick={() => setOpenBrief(openBrief === i ? null : i)}
+                    type="button"
+                    aria-expanded={openBrief === i}
+                  >
+                    <span>{s.heading}</span>
+                    <span className="tl-acc-chevron" style={{ transform: openBrief === i ? "rotate(180deg)" : "none" }}>
+                      ▾
+                    </span>
+                  </button>
+                  {openBrief === i && (
+                    <p className="tl-acc-body">{s.body}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="tl-panel tl-example-panel">
+            <div className="tl-panel-head" style={{ marginBottom: 16 }}>
+              <span className="tl-eyebrow">Example output</span>
+              <span className="tl-brief-subtitle">Jordan Park vs. Senior PM — Growth</span>
+            </div>
+            <ResultPanel result={EXAMPLE_RESULT} onReset={() => {}} />
+          </div>
+
         </aside>
 
       </main>
@@ -385,7 +444,7 @@ const css = `
 .tl-fineprint{margin:10px 0 0;font-size:11.5px;color:var(--inkSoft);line-height:1.5;}
 .tl-error{color:${PALETTE.reject};font-size:12.5px;margin:0 0 8px;}
 
-.tl-empty{min-height:380px;display:flex;flex-direction:column;
+.tl-empty{min-height:340px;display:flex;flex-direction:column;
   align-items:center;justify-content:center;text-align:center;padding:30px;}
 .tl-empty-mark{font-size:30px;color:var(--system);opacity:0.55;}
 .tl-empty-title{font-weight:650;margin:14px 0 6px;font-size:15px;}
@@ -393,11 +452,33 @@ const css = `
 .tl-pulse{animation:tlpulse 1.1s ease-in-out infinite;}
 @keyframes tlpulse{0%,100%{opacity:.4;}50%{opacity:1;}}
 
+/* RIGHT COLUMN */
+.tl-right-col{display:flex;flex-direction:column;gap:18px;position:sticky;top:20px;}
+
+/* BRIEF ACCORDION */
+.tl-brief-panel{}
+.tl-brief-subtitle{font-size:12px;color:var(--inkSoft);}
+.tl-accordion{margin-top:8px;}
+.tl-acc-item{border-bottom:1px solid var(--line);}
+.tl-acc-item:last-child{border-bottom:none;}
+.tl-acc-trigger{width:100%;background:none;border:none;padding:12px 0;
+  display:flex;justify-content:space-between;align-items:center;cursor:pointer;
+  font-size:13px;font-weight:600;color:var(--ink);text-align:left;gap:8px;}
+.tl-acc-trigger:hover{color:var(--system);}
+.tl-acc-chevron{font-size:14px;color:var(--inkSoft);flex-shrink:0;
+  transition:transform .18s ease;display:inline-block;}
+.tl-acc-body{font-size:13px;line-height:1.65;color:var(--inkSoft);
+  margin:0 0 14px;padding-right:8px;}
+
+/* EXAMPLE PANEL */
+.tl-example-panel{}
+
+/* RESULT SHARED */
 .tl-verdict-top{display:flex;justify-content:space-between;align-items:center;}
 .tl-verdict-tag{font-family:ui-monospace,monospace;font-size:12px;font-weight:700;letter-spacing:0.04em;}
-.tl-score{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:56px;
+.tl-score{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:52px;
   font-weight:700;line-height:1;letter-spacing:-0.04em;margin:8px 0 14px;}
-.tl-score-max{font-size:18px;color:var(--inkSoft);font-weight:500;margin-left:4px;}
+.tl-score-max{font-size:17px;color:var(--inkSoft);font-weight:500;margin-left:4px;}
 .tl-meter{position:relative;height:12px;border-radius:6px;overflow:hidden;display:flex;
   border:1px solid var(--line);}
 .tl-meter-zone{height:100%;opacity:0.28;}
@@ -408,41 +489,29 @@ const css = `
   font-size:10px;color:var(--inkSoft);}
 .tl-meter-labels span{position:absolute;transform:translateX(-50%);}
 .tl-meter-labels span:first-child{left:0;transform:none;}
-
-.tl-summary{font-size:13.5px;line-height:1.65;margin:18px 0 4px;padding:14px;
+.tl-summary{font-size:13px;line-height:1.65;margin:16px 0 4px;padding:13px;
   background:var(--paper);border-radius:10px;}
-.tl-block{margin-top:24px;}
+.tl-block{margin-top:22px;}
 .tl-block .tl-eyebrow{display:block;margin-bottom:5px;}
-.tl-block-sub{font-size:12px;color:var(--inkSoft);margin:0 0 14px;line-height:1.5;}
-
-.tl-gap{margin-bottom:14px;}
+.tl-block-sub{font-size:12px;color:var(--inkSoft);margin:0 0 13px;line-height:1.5;}
+.tl-gap{margin-bottom:13px;}
 .tl-gap-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
-.tl-gap-phrase{font-size:12.5px;font-weight:600;font-style:italic;color:var(--ink);
+.tl-gap-phrase{font-size:12px;font-weight:600;font-style:italic;color:var(--ink);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:75%;}
-.tl-gap-status{font-family:ui-monospace,monospace;font-size:10.5px;font-weight:700;
+.tl-gap-status{font-family:ui-monospace,monospace;font-size:10px;font-weight:700;
   letter-spacing:0.06em;text-transform:uppercase;flex-shrink:0;}
-.tl-dim-track{height:5px;background:var(--line);border-radius:3px;margin:6px 0 5px;overflow:hidden;}
+.tl-dim-track{height:5px;background:var(--line);border-radius:3px;margin:5px 0 4px;overflow:hidden;}
 .tl-dim-fill{height:100%;border-radius:3px;transition:width .5s ease;}
 .tl-gap-explanation{font-size:11.5px;color:var(--inkSoft);margin:0;line-height:1.45;}
-
-.tl-rw{padding:14px;background:var(--paper);border-radius:10px;margin-bottom:10px;}
+.tl-rw{padding:13px;background:var(--paper);border-radius:10px;margin-bottom:9px;}
 .tl-rw-gap{font-family:ui-monospace,monospace;font-size:10px;color:var(--system);
-  letter-spacing:0.08em;text-transform:uppercase;margin:0 0 10px;font-weight:600;}
-.tl-rw-before{font-size:12.5px;color:${PALETTE.reject};margin:0 0 8px;
+  letter-spacing:0.08em;text-transform:uppercase;margin:0 0 9px;font-weight:600;}
+.tl-rw-before{font-size:12px;color:${PALETTE.reject};margin:0 0 7px;
   text-decoration:line-through;text-decoration-color:rgba(192,71,59,0.35);line-height:1.55;}
-.tl-rw-after{font-size:13px;color:${PALETTE.advance};font-weight:600;margin:0 0 8px;line-height:1.55;}
+.tl-rw-after{font-size:12.5px;color:${PALETTE.advance};font-weight:600;margin:0 0 7px;line-height:1.55;}
 .tl-rw-why{font-size:11.5px;color:var(--inkSoft);margin:0;line-height:1.45;font-style:italic;}
+.tl-another{margin-top:22px;padding-top:16px;border-top:1px solid var(--line);}
 
-.tl-another{margin-top:24px;padding-top:18px;border-top:1px solid var(--line);}
-
-/* THE BRIEF */
-.tl-brief{position:sticky;top:20px;}
-.tl-brief-sub{font-size:12px;color:var(--inkSoft);}
-.tl-brief-section{margin-bottom:22px;padding-bottom:22px;border-bottom:1px solid var(--line);}
-.tl-brief-section:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none;}
-.tl-brief-heading{font-size:13.5px;font-weight:700;margin:0 0 7px;color:var(--ink);
-  letter-spacing:-0.01em;}
-.tl-brief-body{font-size:13px;line-height:1.65;color:var(--inkSoft);margin:0;}
-
-@media(prefers-reduced-motion:reduce){.tl-pulse{animation:none;}.tl-run:hover{transform:none;}}
+@media(prefers-reduced-motion:reduce){.tl-pulse{animation:none;}.tl-run:hover{transform:none;}
+  .tl-acc-chevron{transition:none;}}
 `;
