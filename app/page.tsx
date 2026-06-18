@@ -287,9 +287,9 @@ function App() {
       <header className="tl-header">
         <div className="tl-brand">
           <span className="tl-dot" />
-          <span className="tl-wordmark">throughline</span>
+          <span className="tl-wordmark">passtheaiscreener</span>
         </div>
-        <p className="tl-tagline">Close the semantic gap between your resume and the screener.</p>
+        <p className="tl-tagline">Pass the AI screener. Close the semantic gap before a human ever sees you.</p>
       </header>
 
       <main className="tl-grid">
