@@ -3,15 +3,15 @@ import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
 const PALETTE = {
-  paper: "#0D0D0D",
-  surface: "#161616",
-  ink: "#EFEFEF",
-  inkSoft: "#888888",
-  line: "#2A2A2A",
-  system: "#FF6B6B",
-  reject: "#FF4444",
-  review: "#F59E0B",
-  advance: "#34D399",
+  paper: "#F4F6F9",
+  surface: "#FFFFFF",
+  ink: "#0A0F1E",
+  inkSoft: "#5C6478",
+  line: "#DDE2ED",
+  system: "#0A0F1E",
+  reject: "#C0392B",
+  review: "#D97706",
+  advance: "#0F7A4B",
 };
 
 const SAMPLE_RESUME = `JORDAN PARK
@@ -430,7 +430,7 @@ const css = `
   border:1px solid var(--line);
   border-radius:20px;
   padding:24px;
-  box-shadow:0 4px 24px rgba(0,0,0,0.4),0 1px 2px rgba(0,0,0,0.6);
+  box-shadow:0 2px 8px rgba(10,15,30,0.07),0 1px 2px rgba(10,15,30,0.05);
 }
 .tl-left{display:flex;flex-direction:column;}
 .tl-panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
@@ -443,24 +443,24 @@ const css = `
   letter-spacing:0.02em;text-transform:uppercase;}
 .tl-textarea{width:100%;height:200px;resize:vertical;
   border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;
-  font-size:13.5px;line-height:1.6;background:#0D0D0D;color:var(--ink);
-  font-family:inherit;transition:border-color .15s;caret-color:var(--system);}
+  font-size:13.5px;line-height:1.6;background:var(--paper);color:var(--ink);
+  font-family:inherit;transition:border-color .15s;}
 .tl-textarea-short{height:110px;}
-.tl-textarea:focus{outline:none;border-color:var(--system);
-  box-shadow:0 0 0 3px rgba(255,107,107,0.12);}
-.tl-textarea::placeholder{color:#444;}
+.tl-textarea:focus{outline:none;border-color:var(--ink);
+  box-shadow:0 0 0 3px rgba(10,15,30,0.08);}
+.tl-textarea::placeholder{color:#AAB0BF;}
 .tl-checkout-area{margin-top:20px;}
 .tl-run{
-  width:100%;background:var(--system);color:#fff;border:none;
+  width:100%;background:var(--ink);color:#fff;border:none;
   border-radius:12px;padding:14px 20px;font-size:14.5px;font-weight:700;
   cursor:pointer;letter-spacing:-0.01em;
-  box-shadow:0 2px 0 rgba(0,0,0,0.5),0 4px 20px rgba(255,107,107,0.2);
+  box-shadow:0 2px 0 rgba(0,0,0,0.3),0 4px 12px rgba(10,15,30,0.15);
   transition:transform .1s ease,box-shadow .1s ease,opacity .2s;
 }
 .tl-run:hover:not(:disabled){transform:translateY(-1px);
-  box-shadow:0 4px 2px rgba(0,0,0,0.4),0 8px 24px rgba(255,107,107,0.3);}
-.tl-run:active:not(:disabled){transform:translateY(0);box-shadow:0 1px 0 rgba(0,0,0,0.5);}
-.tl-run:disabled{opacity:0.35;cursor:default;box-shadow:none;}
+  box-shadow:0 4px 2px rgba(0,0,0,0.2),0 8px 20px rgba(10,15,30,0.2);}
+.tl-run:active:not(:disabled){transform:translateY(0);box-shadow:0 1px 0 rgba(0,0,0,0.3);}
+.tl-run:disabled{opacity:0.4;cursor:default;box-shadow:none;}
 .tl-fineprint{margin:10px 0 0;font-size:11.5px;color:var(--inkSoft);line-height:1.55;
   text-align:center;}
 .tl-error{color:${PALETTE.reject};font-size:12.5px;margin:0 0 10px;font-weight:500;}
@@ -505,12 +505,12 @@ const css = `
 .tl-meter-tick{position:absolute;top:0;bottom:0;width:1px;background:rgba(28,25,23,0.25);}
 .tl-meter-marker{position:absolute;top:-5px;bottom:-5px;width:3px;background:var(--ink);
   border-radius:2px;transform:translateX(-50%);
-  box-shadow:0 0 0 3px #161616,0 0 0 4px var(--ink);}
+  box-shadow:0 0 0 3px #fff,0 0 0 4px var(--ink);}
 .tl-meter-labels{position:relative;height:16px;margin-top:5px;font-size:10px;color:var(--inkSoft);}
 .tl-meter-labels span{position:absolute;transform:translateX(-50%);}
 .tl-meter-labels span:first-child{left:0;transform:none;}
 .tl-summary{font-size:13px;line-height:1.7;margin:16px 0 0;padding:14px 16px;
-  background:#0D0D0D;border-radius:12px;border:1px solid var(--line);}
+  background:var(--paper);border-radius:12px;border:1px solid var(--line);}
 .tl-block{margin-top:22px;}
 .tl-block>.tl-eyebrow{display:block;margin-bottom:4px;}
 .tl-block-sub{font-size:12px;color:var(--inkSoft);margin:0 0 12px;line-height:1.5;}
@@ -525,7 +525,7 @@ const css = `
 .tl-dim-fill{height:100%;border-radius:2px;transition:width .6s cubic-bezier(.4,0,.2,1);}
 .tl-gap-explanation{font-size:11.5px;color:var(--inkSoft);margin:0;line-height:1.5;}
 .tl-rw{
-  padding:14px 16px;background:#0D0D0D;
+  padding:14px 16px;background:var(--paper);
   border-radius:14px;margin-bottom:10px;
   border:1px solid var(--line);
 }
