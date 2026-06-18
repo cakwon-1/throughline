@@ -12,7 +12,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Missing session_id." }, { status: 400 });
   }
 
-  // Verify payment with Stripe
   const checkout = await stripe.checkout.sessions.retrieve(sessionId);
   if (checkout.payment_status !== "paid") {
     return NextResponse.json({ error: "Payment not confirmed." }, { status: 402 });
@@ -25,34 +24,58 @@ export async function GET(req: NextRequest) {
 
   const { resume, jd } = payload;
 
-  const prompt = `You are an LLM-based resume screener of the kind used in 2026 hiring pipelines (semantic "Layer 2" screening, not keyword ATS). Evaluate the RESUME against the JOB DESCRIPTION the way such a screener would: judge demonstrated seniority/scope from language, requirements fit by meaning (not literal keywords), specificity and quantification of impact, coherence of the career narrative for THIS role, and authenticity (whether bullets read as generic AI-generated boilerplate that a modern screener would down-rank).
+  const prompt = `You are a semantic resume analyst. Your job is to find the exact gap between what a job description demands and what a resume actually communicates — and close it with targeted rewrites.
 
-Return ONLY valid JSON, no markdown, no preamble, matching exactly:
+Modern LLM screeners used by enterprise HR (Workday AI, HireVue, Eightfold, Greenhouse AI layers) do NOT do keyword matching. They embed both documents and measure semantic similarity. A resume that says "drove user growth" when the JD says "owned activation funnel" will score low even though a human would see the connection — because the semantic vectors don't align. Your job is to surface and fix those gaps.
+
+STEP 1 — Extract the 8 most semantically loaded phrases from the JD. These are the concepts that carry the most weight: specific outcomes, required competencies, scope signals, methodologies. Not generic words like "collaborate" — specific ones like "activation funnel" or "cross-functional without authority."
+
+STEP 2 — For each phrase, determine whether the resume addresses it semantically (not just lexically). Score the coverage 0-100.
+
+STEP 3 — For the 3 lowest-coverage gaps, write a specific rewrite of an existing resume bullet that closes the gap. The rewrite must: use language that mirrors the JD's semantic field, add a quantified outcome, and sound like a real human wrote it (not AI boilerplate).
+
+STEP 4 — Give an overall semantic alignment score and a screener verdict.
+
+Return ONLY valid JSON, no markdown, no preamble:
 {
- "overall": <integer 0-100>,
- "verdict": "advance" | "review" | "reject",
- "dimensions": [
-   {"name":"Requirements match","score":<0-100>,"note":"<=14 words"},
-   {"name":"Seniority signal","score":<0-100>,"note":"<=14 words"},
-   {"name":"Quantified impact","score":<0-100>,"note":"<=14 words"},
-   {"name":"Narrative fit","score":<0-100>,"note":"<=14 words"},
-   {"name":"Authenticity","score":<0-100>,"note":"<=14 words"}
- ],
- "flags": [{"severity":"high"|"med","issue":"<short>","evidence":"<short line from resume>"}],
- "rewrites": [{"before":"<weak resume line>","after":"<stronger rewrite>","why":"<=12 words"}],
- "summary":"<2-3 sentence screener-voice verdict>"
+  "overall": <integer 0-100>,
+  "verdict": "advance" | "review" | "reject",
+  "summary": "<2-3 sentences, direct and specific, written as a talent advisor — not a screener robot. Tell them the truth about why this lands where it does.>",
+  "gaps": [
+    {
+      "phrase": "<exact phrase from JD>",
+      "coverage": <0-100>,
+      "status": "strong" | "partial" | "missing",
+      "explanation": "<1 sentence: what the resume does or doesn't say about this>"
+    }
+  ],
+  "rewrites": [
+    {
+      "gap": "<which JD phrase this closes>",
+      "before": "<the weak or missing resume bullet — quote it exactly if it exists, or write '[No bullet addresses this]'>",
+      "after": "<the rewrite — specific, quantified, semantically aligned to the JD phrase>",
+      "why": "<one sentence: the specific semantic shift this makes>"
+    }
+  ]
 }
-Rules: verdict = advance if overall>=80, review if 60-79, reject if <60. Give 2-4 flags and 2-3 rewrites. Authenticity score is LOWER when text is generic/AI-sounding. Be specific and honest; do not flatter.
 
-RESUME:
-${resume}
+Rules:
+- verdict = advance if overall>=80, review if 60-79, reject if <60
+- gaps array must have exactly 8 items
+- rewrites array must have exactly 3 items, targeting the 3 lowest-coverage gaps
+- Be brutally honest. Do not soften scores to be encouraging.
+- Rewrites must sound human. No "spearheaded", "leveraged", "utilized", "results-driven".
+- Each rewrite "after" must include at least one specific number or metric, even if estimated (use "~" prefix if estimated).
 
 JOB DESCRIPTION:
-${jd}`;
+${jd}
+
+RESUME:
+${resume}`;
 
   const message = await anthropic.messages.create({
     model: "claude-sonnet-4-6",
-    max_tokens: 1024,
+    max_tokens: 2048,
     messages: [{ role: "user", content: prompt }],
   });
 
@@ -66,7 +89,6 @@ ${jd}`;
 
   const result = JSON.parse(text);
 
-  // Consume the session so it can't be replayed
   await del(sessionId);
 
   return NextResponse.json(result);
