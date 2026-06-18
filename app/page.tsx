@@ -372,6 +372,10 @@ function App() {
                 </button>
                 <p className="tl-fineprint">One-time payment · Semantic gap analysis + targeted rewrites</p>
               </div>
+              <div className="tl-diy-inline">
+                <p className="tl-diy-inline-label">If you don&apos;t want to pay — copy this prompt into any LLM:</p>
+                <CopyPrompt />
+              </div>
             </>
           )}
 
@@ -430,18 +434,6 @@ function App() {
               <span className="tl-brief-subtitle">Jordan Park vs. Senior PM — Growth</span>
             </div>
             <ResultPanel result={EXAMPLE_RESULT} onReset={() => {}} />
-          </div>
-
-          <div className="tl-panel tl-diy-panel">
-            <div className="tl-panel-head" style={{ marginBottom: 12 }}>
-              <span className="tl-eyebrow">If you don&apos;t want to pay</span>
-            </div>
-            <p className="tl-diy-intro">
-              Copy this prompt into Claude, ChatGPT, or any LLM. Paste your resume and job description where indicated. It won&apos;t be as structured as our output, but it will surface the same gaps.
-            </p>
-            <div className="tl-diy-prompt-wrap">
-              <CopyPrompt />
-            </div>
           </div>
 
         </aside>
@@ -597,7 +589,9 @@ const css = `
 .tl-rw-why{font-size:11.5px;color:var(--inkSoft);margin:0;line-height:1.5;font-style:italic;}
 .tl-another{margin-top:20px;padding-top:16px;border-top:1px solid var(--line);}
 
-/* DIY PANEL */
+/* DIY INLINE */
+.tl-diy-inline{margin-top:20px;padding-top:18px;border-top:1px solid var(--line);}
+.tl-diy-inline-label{font-size:11.5px;color:var(--inkSoft);margin:0 0 10px;line-height:1.5;}
 .tl-diy-intro{font-size:13px;color:var(--inkSoft);line-height:1.65;margin:0 0 14px;}
 .tl-diy-prompt{position:relative;}
 .tl-diy-pre{
