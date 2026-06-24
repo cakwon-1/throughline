@@ -137,7 +137,10 @@ const EXAMPLE_RESULT: ScreenResult = {
   ],
 };
 
-const DIY_PROMPT = `You are a semantic resume screener. Analyze how well my resume aligns with this job description. Not by keyword matching, but by semantic meaning, the way an LLM-based HR screener would.
+function buildDiyPrompt(resume: string, jd: string) {
+  const resumeText = resume.trim() || "[paste your resume here]";
+  const jdText = jd.trim() || "[paste job description here]";
+  return `You are a semantic resume screener. Analyze how well my resume aligns with this job description — not by keyword matching, but by semantic meaning, the way an LLM-based HR screener would.
 
 Do the following:
 
@@ -156,32 +159,49 @@ Be honest. Do not flatter.
 
 ---
 JOB DESCRIPTION:
-[paste job description here]
+${jdText}
 
 ---
 RESUME:
-[paste resume here]`;
+${resumeText}`;
+}
 
-function CopyPrompt() {
+function AskClaude({ resume, jd }: { resume: string; jd: string }) {
   const [copied, setCopied] = useState(false);
+  const prompt = buildDiyPrompt(resume, jd);
+  const hasContent = resume.trim() || jd.trim();
+
+  function handleOpenClaude() {
+    const url = `https://claude.ai/new?q=${encodeURIComponent(prompt)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
 
   function handleCopy() {
-    navigator.clipboard.writeText(DIY_PROMPT).then(() => {
+    navigator.clipboard.writeText(prompt).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
   }
 
   return (
-    <div className="tl-diy-prompt">
-      <pre className="tl-diy-pre">{DIY_PROMPT}</pre>
-      <button className="tl-diy-copy" onClick={handleCopy} type="button">
-        {copied ? "Copied!" : "Copy prompt"}
+    <div className="tl-ask-claude">
+      <button className="tl-ask-claude-btn" onClick={handleOpenClaude} type="button">
+        <span className="tl-ask-claude-icon">✦</span>
+        {hasContent ? "Ask Claude with your resume + JD" : "Ask Claude yourself"}
+        <span className="tl-ask-claude-arrow">↗</span>
+      </button>
+      {hasContent && (
+        <p className="tl-ask-claude-hint">Opens Claude with your resume and job description already filled in.</p>
+      )}
+      <button className="tl-ask-claude-copy" onClick={handleCopy} type="button">
+        {copied ? "Copied!" : "or copy the prompt"}
       </button>
     </div>
   );
 }
 
+// All string fields in `result` may contain user-supplied text (resume bullets echoed by the model).
+// Render as plain React children only — never use dangerouslySetInnerHTML on these values.
 function ResultPanel({ result, onReset }: { result: ScreenResult; onReset: () => void }) {
   const vm = verdictMeta(result.verdict);
   return (
@@ -214,7 +234,7 @@ function ResultPanel({ result, onReset }: { result: ScreenResult; onReset: () =>
 
       {result.gaps?.length > 0 && (
         <div className="tl-block">
-          <span className="tl-eyebrow">JD concept coverage</span>
+          <span className="tl-eyebrow">Your gap map</span>
           <p className="tl-block-sub">The 8 concepts the screener weights most, and how well your resume addresses each.</p>
           {result.gaps.map((g, i) => (
             <div className="tl-gap" key={i}>
@@ -267,24 +287,52 @@ function App() {
   const [result, setResult] = useState<ScreenResult | null>(null);
   const [screenLoading, setScreenLoading] = useState(false);
   const [screenError, setScreenError] = useState("");
+  const [paymentPending, setPaymentPending] = useState(false);
   const [openBrief, setOpenBrief] = useState<number | null>(0);
   const topRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!sessionId) return;
+    if (!/^cs_(test|live)_[A-Za-z0-9]{40,}$/.test(sessionId)) return;
+    const id = sessionId;
+    router.replace("/", { scroll: false }); // clear URL before fetch so session_id never sits in history
     setScreenLoading(true);
     setScreenError("");
-    fetch(`/api/run-screen?session_id=${sessionId}`)
-      .then((r) => r.json())
-      .then((data) => {
+    setPaymentPending(false);
+
+    let attempts = 0;
+    const MAX_ATTEMPTS = 6; // up to ~12s of retries
+
+    async function poll() {
+      try {
+        const r = await fetch("/api/run-screen", {
+          headers: { "x-session-id": id },
+        });
+        if (r.status === 202 && attempts < MAX_ATTEMPTS) {
+          // Webhook hasn't confirmed payment yet — wait 2s and retry
+          attempts++;
+          setPaymentPending(true);
+          setTimeout(poll, 2000);
+          return;
+        }
+        setPaymentPending(false);
+        setScreenLoading(false);
+        if (r.status === 202) {
+          // Exhausted retries — webhook never arrived
+          setScreenError("Payment confirmation timed out. Your payment was recorded. Contact support if this persists.");
+          return;
+        }
+        const data = await r.json();
         if (data.error) setScreenError(data.error);
         else setResult(data);
-      })
-      .catch(() => setScreenError("Failed to load results. Try again."))
-      .finally(() => {
+      } catch {
+        setPaymentPending(false);
+        setScreenError("Failed to load results. Try again.");
         setScreenLoading(false);
-        router.replace("/", { scroll: false });
-      });
+      }
+    }
+
+    poll();
   }, [sessionId]);
 
   async function handleCheckout() {
@@ -302,7 +350,14 @@ function App() {
       });
       const data = await res.json();
       if (data.url) {
-        window.location.href = data.url;
+        try {
+          const parsed = new URL(data.url);
+          if (parsed.origin !== "https://checkout.stripe.com") throw new Error();
+          window.location.href = data.url;
+        } catch {
+          setCheckoutError("Unexpected redirect. Please contact support.");
+          setCheckoutLoading(false);
+        }
       } else {
         setCheckoutError(data.error || "Couldn't start checkout. Try again.");
         setCheckoutLoading(false);
@@ -329,8 +384,6 @@ function App() {
 
   return (
     <div className="tl-root">
-      <style>{css}</style>
-
       <header className="tl-header" ref={topRef}>
         <div className="tl-brand">
           <span className="tl-dot" />
@@ -373,8 +426,8 @@ function App() {
                 <p className="tl-fineprint">One-time payment · Semantic gap analysis + targeted rewrites</p>
               </div>
               <div className="tl-diy-inline">
-                <p className="tl-diy-inline-label">If you don&apos;t want to pay, copy this prompt into any LLM:</p>
-                <CopyPrompt />
+                <p className="tl-diy-inline-label">Don&apos;t want to pay? Do it yourself — free.</p>
+                <AskClaude resume={resume} jd={jd} />
               </div>
             </>
           )}
@@ -382,8 +435,8 @@ function App() {
           {screenLoading && (
             <div className="tl-empty">
               <span className="tl-empty-mark tl-pulse">◷</span>
-              <p className="tl-empty-title">Mapping semantic gaps…</p>
-              <p className="tl-empty-body">Extracting JD concepts, scoring coverage, writing targeted rewrites.</p>
+              <p className="tl-empty-title">{paymentPending ? "Confirming payment…" : "Mapping semantic gaps…"}</p>
+              <p className="tl-empty-body">{paymentPending ? "Waiting for payment confirmation. This takes a few seconds." : "Extracting JD concepts, scoring coverage, writing targeted rewrites."}</p>
             </div>
           )}
 
@@ -450,169 +503,3 @@ export default function Home() {
     </Suspense>
   );
 }
-
-const css = `
-.tl-root{
-  --paper:${PALETTE.paper}; --surface:${PALETTE.surface}; --ink:${PALETTE.ink};
-  --inkSoft:${PALETTE.inkSoft}; --line:${PALETTE.line}; --system:${PALETTE.system};
-  background:var(--paper); color:var(--ink); min-height:100vh;
-  font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  padding:32px 24px; box-sizing:border-box;
-}
-.tl-root *{box-sizing:border-box;}
-
-/* HEADER */
-.tl-header{max-width:1120px;margin:0 auto 28px;display:flex;align-items:baseline;
-  justify-content:space-between;flex-wrap:wrap;gap:8px;}
-.tl-brand{display:flex;align-items:center;gap:10px;}
-.tl-dot{width:10px;height:10px;border-radius:50%;background:var(--system);}
-.tl-wordmark{font-weight:800;letter-spacing:-0.04em;font-size:20px;color:var(--ink);}
-.tl-tagline{font-size:13.5px;color:var(--inkSoft);font-style:italic;}
-
-/* GRID */
-.tl-grid{max-width:1120px;margin:0 auto;display:grid;
-  grid-template-columns:1fr 1fr;gap:20px;align-items:start;}
-@media(max-width:820px){.tl-grid{grid-template-columns:1fr;}}
-
-/* CARDS */
-.tl-panel{
-  background:var(--surface);
-  border:1px solid var(--line);
-  border-radius:20px;
-  padding:24px;
-  box-shadow:0 2px 8px rgba(10,15,30,0.07),0 1px 2px rgba(10,15,30,0.05);
-}
-.tl-left{display:flex;flex-direction:column;}
-.tl-panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
-.tl-eyebrow{font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;
-  color:var(--inkSoft);}
-.tl-link{background:none;border:none;color:var(--system);font-size:12.5px;cursor:pointer;
-  font-weight:600;padding:3px 0;text-underline-offset:3px;}
-.tl-link:hover{text-decoration:underline;}
-.tl-label{display:block;font-size:12px;font-weight:600;margin:14px 0 5px;color:var(--inkSoft);
-  letter-spacing:0.02em;text-transform:uppercase;}
-.tl-textarea{width:100%;height:200px;resize:vertical;
-  border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;
-  font-size:13.5px;line-height:1.6;background:var(--paper);color:var(--ink);
-  font-family:inherit;transition:border-color .15s;}
-.tl-textarea-short{height:110px;}
-.tl-textarea:focus{outline:none;border-color:var(--ink);
-  box-shadow:0 0 0 3px rgba(10,15,30,0.08);}
-.tl-textarea::placeholder{color:#AAB0BF;}
-.tl-checkout-area{margin-top:20px;}
-.tl-run{
-  width:100%;background:var(--ink);color:#fff;border:none;
-  border-radius:12px;padding:14px 20px;font-size:14.5px;font-weight:700;
-  cursor:pointer;letter-spacing:-0.01em;
-  box-shadow:0 2px 0 rgba(0,0,0,0.3),0 4px 12px rgba(10,15,30,0.15);
-  transition:transform .1s ease,box-shadow .1s ease,opacity .2s;
-}
-.tl-run:hover:not(:disabled){transform:translateY(-1px);
-  box-shadow:0 4px 2px rgba(0,0,0,0.2),0 8px 20px rgba(10,15,30,0.2);}
-.tl-run:active:not(:disabled){transform:translateY(0);box-shadow:0 1px 0 rgba(0,0,0,0.3);}
-.tl-run:disabled{opacity:0.4;cursor:default;box-shadow:none;}
-.tl-fineprint{margin:10px 0 0;font-size:11.5px;color:var(--inkSoft);line-height:1.55;
-  text-align:center;}
-.tl-error{color:${PALETTE.reject};font-size:12.5px;margin:0 0 10px;font-weight:500;}
-
-/* LOADING / EMPTY */
-.tl-empty{min-height:320px;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;text-align:center;padding:32px;}
-.tl-empty-mark{font-size:28px;opacity:0.4;}
-.tl-empty-title{font-weight:700;margin:12px 0 5px;font-size:15px;}
-.tl-empty-body{color:var(--inkSoft);font-size:13px;max-width:280px;line-height:1.6;margin:0 0 16px;}
-.tl-pulse{animation:tlpulse 1.2s ease-in-out infinite;}
-@keyframes tlpulse{0%,100%{opacity:.25;}50%{opacity:.9;}}
-
-/* RIGHT COLUMN */
-.tl-right-col{display:flex;flex-direction:column;gap:20px;position:sticky;top:20px;}
-
-/* ACCORDION */
-.tl-brief-subtitle{font-size:12px;color:var(--inkSoft);}
-.tl-accordion{margin-top:10px;}
-.tl-acc-item{border-bottom:1px solid var(--line);}
-.tl-acc-item:last-child{border-bottom:none;}
-.tl-acc-trigger{
-  width:100%;background:none;border:none;padding:13px 0;
-  display:flex;justify-content:space-between;align-items:center;
-  cursor:pointer;font-size:13px;font-weight:600;color:var(--ink);
-  text-align:left;gap:10px;
-}
-.tl-acc-trigger:hover{color:var(--system);}
-.tl-acc-chevron{font-size:13px;color:var(--inkSoft);flex-shrink:0;
-  transition:transform .2s ease;display:inline-block;line-height:1;}
-.tl-acc-body{font-size:13px;line-height:1.7;color:var(--inkSoft);
-  margin:0 0 14px;padding-right:4px;}
-
-/* RESULTS */
-.tl-verdict-top{display:flex;justify-content:space-between;align-items:center;}
-.tl-verdict-tag{font-size:11px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;}
-.tl-score{font-size:54px;font-weight:800;line-height:1;letter-spacing:-0.04em;margin:6px 0 14px;}
-.tl-score-max{font-size:18px;color:var(--inkSoft);font-weight:500;margin-left:3px;}
-.tl-meter{position:relative;height:10px;border-radius:5px;overflow:hidden;display:flex;
-  border:1px solid var(--line);}
-.tl-meter-zone{height:100%;opacity:0.22;}
-.tl-meter-tick{position:absolute;top:0;bottom:0;width:1px;background:rgba(28,25,23,0.25);}
-.tl-meter-marker{position:absolute;top:-5px;bottom:-5px;width:3px;background:var(--ink);
-  border-radius:2px;transform:translateX(-50%);
-  box-shadow:0 0 0 3px #fff,0 0 0 4px var(--ink);}
-.tl-meter-labels{position:relative;height:16px;margin-top:5px;font-size:10px;color:var(--inkSoft);}
-.tl-meter-labels span{position:absolute;transform:translateX(-50%);}
-.tl-meter-labels span:first-child{left:0;transform:none;}
-.tl-summary{font-size:13px;line-height:1.7;margin:16px 0 0;padding:14px 16px;
-  background:var(--paper);border-radius:12px;border:1px solid var(--line);}
-.tl-block{margin-top:22px;}
-.tl-block>.tl-eyebrow{display:block;margin-bottom:4px;}
-.tl-block-sub{font-size:12px;color:var(--inkSoft);margin:0 0 12px;line-height:1.5;}
-.tl-gap{margin-bottom:14px;}
-.tl-gap-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
-.tl-gap-phrase{font-size:12px;font-weight:600;font-style:italic;color:var(--ink);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:74%;}
-.tl-gap-status{font-size:9.5px;font-weight:800;letter-spacing:0.1em;
-  text-transform:uppercase;flex-shrink:0;}
-.tl-dim-track{height:4px;background:var(--line);border-radius:2px;
-  margin:5px 0 4px;overflow:hidden;}
-.tl-dim-fill{height:100%;border-radius:2px;transition:width .6s cubic-bezier(.4,0,.2,1);}
-.tl-gap-explanation{font-size:11.5px;color:var(--inkSoft);margin:0;line-height:1.5;}
-.tl-rw{
-  padding:14px 16px;background:var(--paper);
-  border-radius:14px;margin-bottom:10px;
-  border:1px solid var(--line);
-}
-.tl-rw-gap{font-size:9.5px;font-weight:700;color:var(--system);letter-spacing:0.1em;
-  text-transform:uppercase;margin:0 0 10px;}
-.tl-rw-before{font-size:12.5px;color:${PALETTE.reject};margin:0 0 8px;
-  text-decoration:line-through;text-decoration-color:rgba(185,28,28,0.3);
-  line-height:1.6;}
-.tl-rw-after{font-size:13px;color:${PALETTE.advance};font-weight:600;
-  margin:0 0 8px;line-height:1.6;}
-.tl-rw-why{font-size:11.5px;color:var(--inkSoft);margin:0;line-height:1.5;font-style:italic;}
-.tl-another{margin-top:20px;padding-top:16px;border-top:1px solid var(--line);}
-
-/* DIY INLINE */
-.tl-diy-inline{margin-top:20px;padding-top:18px;border-top:1px solid var(--line);}
-.tl-diy-inline-label{font-size:11.5px;color:var(--inkSoft);margin:0 0 10px;line-height:1.5;}
-.tl-diy-intro{font-size:13px;color:var(--inkSoft);line-height:1.65;margin:0 0 14px;}
-.tl-diy-prompt{position:relative;}
-.tl-diy-pre{
-  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
-  font-size:11.5px;line-height:1.7;color:var(--ink);
-  background:var(--paper);border:1px solid var(--line);
-  border-radius:12px;padding:14px;white-space:pre-wrap;word-break:break-word;
-  margin:0 0 10px;max-height:260px;overflow-y:auto;
-}
-.tl-diy-copy{
-  width:100%;background:transparent;border:1.5px solid var(--ink);
-  border-radius:10px;padding:10px;font-size:13px;font-weight:700;
-  color:var(--ink);cursor:pointer;letter-spacing:-0.01em;
-  transition:background .15s,color .15s;
-}
-.tl-diy-copy:hover{background:var(--ink);color:#fff;}
-
-@media(prefers-reduced-motion:reduce){
-  .tl-pulse{animation:none;}
-  .tl-run:hover,.tl-run:active{transform:none;}
-  .tl-acc-chevron{transition:none;}
-  .tl-dim-fill{transition:none;}
-}
-`;
