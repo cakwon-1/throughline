@@ -10,7 +10,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Pass the AI Screener — Resume semantic gap analysis",
+  title: "Pass the AI Screener: Resume Semantic Gap Analysis",
   description: "See exactly how an LLM screener reads your resume. Get your semantic alignment score, gap map, and targeted rewrites for $0.99.",
 };
 

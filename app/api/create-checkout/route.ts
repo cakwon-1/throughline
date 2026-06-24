@@ -24,7 +24,7 @@ function getBase(): string {
 }
 
 export async function POST(req: NextRequest) {
-  // Read the rightmost x-forwarded-for value — Railway appends the real client
+  // Read the rightmost x-forwarded-for value -- Railway appends the real client
   // IP at the end of the chain; reading [0] is attacker-controlled.
   const ip = req.headers.get("x-forwarded-for")?.split(",").at(-1)?.trim() ?? "unknown";
   const allowed = await checkRateLimit(`checkout:${ip}`, 10, 60);
@@ -60,8 +60,8 @@ export async function POST(req: NextRequest) {
           currency: "usd",
           unit_amount: 99,
           product_data: {
-            name: "Pass the AI Screener — Resume Screen",
-            description: "One AI screener pass — see your score, gap map, and rewrites.",
+            name: "Pass the AI Screener: Resume Screen",
+            description: "One AI screener pass. See your score, gap map, and rewrites.",
           },
         },
         quantity: 1,

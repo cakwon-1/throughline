@@ -76,16 +76,16 @@ function decrypt(ciphertext: string, accessToken: string, sessionId: string): st
   const encrypted = buf.subarray(28);
   const decipher = createDecipheriv("aes-256-gcm", deriveKey(accessToken, sessionId), iv);
   decipher.setAuthTag(tag);
-  // Collect both halves as Buffers before decoding to UTF-8 — avoids
+  // Collect both halves as Buffers before decoding to UTF-8, avoids
   // corruption of multi-byte characters split at a 16-byte AES block boundary.
   return Buffer.concat([decipher.update(encrypted), decipher.final()]).toString("utf8");
 }
 
 // Atomically claim the session and fetch the ciphertext in one round-trip.
 // Returns:
-//   "CLAIMED" string  — NX failed (another request already holds the claim)
-//   null              — NX succeeded but session key is missing (not_found)
-//   <ciphertext>      — NX succeeded and session data returned
+//   "CLAIMED" string  -- NX failed (another request already holds the claim)
+//   null              -- NX succeeded but session key is missing (not_found)
+//   <ciphertext>      -- NX succeeded and session data returned
 //
 // Using a sentinel string "CLAIMED" instead of Lua `false` because ioredis
 // maps both Lua false and Lua nil to JS null, making them indistinguishable.
@@ -152,7 +152,7 @@ export async function getAndDelete(
     return { status: "auth_failure" };
   }
 
-  // Decryption succeeded — delete session data and claim key.
+  // Decryption succeeded, delete session data and claim key.
   // The paid flag (tl:paid:<id>) is intentionally left to expire on its TTL
   // so that a 500 from the Anthropic call doesn't destroy payment evidence.
   await r.del(redisKey(sessionId), claimKey(sessionId));

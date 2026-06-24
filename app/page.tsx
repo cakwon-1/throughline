@@ -18,12 +18,12 @@ const SAMPLE_RESUME = `JORDAN PARK
 Product Manager
 
 EXPERIENCE
-Acme SaaS — Product Manager (2021–present)
+Acme SaaS, Product Manager (2021-present)
 - Responsible for the product roadmap and worked cross-functionally with engineering and design teams to deliver features.
 - Leveraged data-driven insights to optimize user engagement and drive growth across the platform.
 - Spearheaded various initiatives that improved the customer experience and aligned with strategic goals.
 
-Brightline Inc — Associate Product Manager (2019–2021)
+Brightline Inc, Associate Product Manager (2019-2021)
 - Assisted with backlog grooming and supported senior PMs on feature launches.
 - Helped coordinate releases and gathered customer feedback.
 
@@ -33,7 +33,7 @@ Roadmapping, Agile, Stakeholder management, SQL, Figma, A/B testing
 EDUCATION
 B.S. Economics, State University, 2019`;
 
-const SAMPLE_JD = `Senior Product Manager — Growth
+const SAMPLE_JD = `Senior Product Manager, Growth
 We're hiring a Senior PM to own our activation and retention funnel. You'll define the
 growth roadmap, run experiments end to end, and partner with data science and engineering
 to move core metrics. Requirements: 5+ years in product, proven record shipping growth
@@ -140,7 +140,7 @@ const EXAMPLE_RESULT: ScreenResult = {
 function buildDiyPrompt(resume: string, jd: string) {
   const resumeText = resume.trim() || "[paste your resume here]";
   const jdText = jd.trim() || "[paste job description here]";
-  return `You are a semantic resume screener. Analyze how well my resume aligns with this job description — not by keyword matching, but by semantic meaning, the way an LLM-based HR screener would.
+  return `You are a semantic resume screener. Analyze how well my resume aligns with this job description, not by keyword matching, but by semantic meaning, the way an LLM-based HR screener would.
 
 Do the following:
 
@@ -201,7 +201,7 @@ function AskClaude({ resume, jd }: { resume: string; jd: string }) {
 }
 
 // All string fields in `result` may contain user-supplied text (resume bullets echoed by the model).
-// Render as plain React children only — never use dangerouslySetInnerHTML on these values.
+// Render as plain React children only. Never use dangerouslySetInnerHTML on these values.
 function ResultPanel({ result, onReset }: { result: ScreenResult; onReset: () => void }) {
   const vm = verdictMeta(result.verdict);
   return (
@@ -309,7 +309,7 @@ function App() {
           headers: { "x-session-id": id },
         });
         if (r.status === 202 && attempts < MAX_ATTEMPTS) {
-          // Webhook hasn't confirmed payment yet — wait 2s and retry
+          // Webhook hasn't confirmed payment yet. Wait 2s and retry.
           attempts++;
           setPaymentPending(true);
           setTimeout(poll, 2000);
@@ -318,7 +318,7 @@ function App() {
         setPaymentPending(false);
         setScreenLoading(false);
         if (r.status === 202) {
-          // Exhausted retries — webhook never arrived
+          // Exhausted retries. Webhook never arrived.
           setScreenError("Payment confirmation timed out. Your payment was recorded. Contact support if this persists.");
           return;
         }
@@ -394,7 +394,7 @@ function App() {
 
       <main className="tl-grid">
 
-        {/* LEFT — inputs or results */}
+        {/* LEFT: inputs or results */}
         <section className="tl-panel tl-left">
           {!result && !screenLoading && !screenError && (
             <>
@@ -426,7 +426,7 @@ function App() {
                 <p className="tl-fineprint">One-time payment · Semantic gap analysis + targeted rewrites</p>
               </div>
               <div className="tl-diy-inline">
-                <p className="tl-diy-inline-label">Don&apos;t want to pay? Do it yourself — free.</p>
+                <p className="tl-diy-inline-label">Don&apos;t want to pay? Ask yourself in Claude for free.</p>
                 <AskClaude resume={resume} jd={jd} />
               </div>
             </>
@@ -451,7 +451,7 @@ function App() {
           {result && <ResultPanel result={result} onReset={runAnother} />}
         </section>
 
-        {/* RIGHT — The Brief (accordion) + example output */}
+        {/* RIGHT: The Brief (accordion) + example output */}
         <aside className="tl-right-col">
 
           <div className="tl-panel tl-brief-panel">

@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
   try {
     // req.text() returns the raw body in Next.js App Router (NextRequest wraps
     // the Web Fetch Request and never auto-parses). Do NOT switch to req.json()
-    // here — parsed body breaks Stripe's HMAC signature verification.
+    // here, parsed body breaks Stripe's HMAC signature verification.
     const rawBody = await req.text();
     event = getStripe().webhooks.constructEvent(rawBody, sig, getWebhookSecret());
   } catch {
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     if (session.payment_status === "paid") {
       await markPaid(session.id);
     } else {
-      // Completed but not paid — BNPL, expired session, or async flow.
+      // Completed but not paid: BNPL, expired session, or async flow.
       // Log for visibility; the async_payment_succeeded event will follow if payment clears.
       console.warn("[stripe] checkout.session.completed with payment_status:", session.payment_status, "session:", session.id.slice(-8));
     }
