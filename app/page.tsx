@@ -226,7 +226,7 @@ function ResultPanel({ result, onReset }: { result: ScreenResult; onReset: () =>
           <span>0</span>
           <span style={{ left: "60%" }}>60</span>
           <span style={{ left: "80%" }}>80</span>
-          <span style={{ right: 0 }}>100</span>
+          <span>100</span>
         </div>
       </div>
 

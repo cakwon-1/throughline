@@ -110,7 +110,7 @@ body {
 .tl-score-max{font-size:18px;color:var(--inkSoft);font-weight:500;margin-left:3px;}
 .tl-meter{position:relative;height:10px;border-radius:5px;overflow:hidden;display:flex;
   border:1px solid var(--line);}
-.tl-meter-zone{height:100%;opacity:0.22;}
+.tl-meter-zone{height:100%;opacity:0.5;}
 .tl-meter-tick{position:absolute;top:0;bottom:0;width:1px;background:rgba(28,25,23,0.25);}
 .tl-meter-marker{position:absolute;top:-5px;bottom:-5px;width:3px;background:var(--ink);
   border-radius:2px;transform:translateX(-50%);
@@ -118,6 +118,7 @@ body {
 .tl-meter-labels{position:relative;height:16px;margin-top:5px;font-size:10px;color:var(--inkSoft);}
 .tl-meter-labels span{position:absolute;transform:translateX(-50%);}
 .tl-meter-labels span:first-child{left:0;transform:none;}
+.tl-meter-labels span:last-child{right:0;left:auto;transform:none;}
 .tl-summary{font-size:13px;line-height:1.7;margin:16px 0 0;padding:14px 16px;
   background:var(--paper);border-radius:12px;border:1px solid var(--line);}
 .tl-block{margin-top:22px;}
